@@ -30,6 +30,9 @@ import (
 	"github.com/pingcap/tidb/util/rowcodec"
 )
 
+//对于表的行数据Key： tablePrefix_tableID_recordPrefixSep_rowID
+//对于index数据Key: tablePrefix{tableID}_indexPrefixSep{indexID}_indexedColumnsValue
+// tableprefix和recordprefixsep是特定的字符串常量，在kv空间区分其他数据
 var (
 	tablePrefix     = []byte{'t'}
 	recordPrefixSep = []byte("_r")
@@ -72,7 +75,28 @@ func EncodeRowKeyWithHandle(tableID int64, handle int64) kv.Key {
 // DecodeRecordKey decodes the key and gets the tableID, handle.
 func DecodeRecordKey(key kv.Key) (tableID int64, handle int64, err error) {
 	/* Your code here */
-	return
+	if key[0] != 't' || len(key) < RecordRowKeyLen {
+		return 0, 0, errInvalidRecordKey
+	}
+
+	key = key[len(tablePrefix):]
+	key, tableID, err = codec.DecodeInt(key)
+	if err != nil {
+		err = errors.Trace(err)
+		return
+	}
+
+	if key[0] != '_' || key[1] != 'r' {
+		return 0, 0, errInvalidRecordKey
+	}
+	key = key[len(recordPrefixSep):]
+	key, handle, err = codec.DecodeInt(key)
+	if err != nil {
+		err = errors.Trace(err)
+		return
+	}
+
+	return tableID, handle, nil
 }
 
 // appendTableIndexPrefix appends table index prefix  "t[tableID]_i".
