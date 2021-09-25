@@ -119,7 +119,28 @@ func EncodeIndexSeekKey(tableID int64, idxID int64, encodedValue []byte) kv.Key 
 // DecodeIndexKeyPrefix decodes the key and gets the tableID, indexID, indexValues.
 func DecodeIndexKeyPrefix(key kv.Key) (tableID int64, indexID int64, indexValues []byte, err error) {
 	/* Your code here */
-	return tableID, indexID, indexValues, nil
+	if key[0] != 't' || len(key) < prefixLen+idLen {
+		return 0, 0, nil, errInvalidRecordKey
+	}
+
+	key = key[len(tablePrefix):]
+	key, tableID, err = codec.DecodeInt(key)
+	if err != nil {
+		err = errors.Trace(err)
+		return
+	}
+
+	if key[0] != '_' || key[1] != 'i' {
+		//	return 0, 0, errInvalidRecordKey
+	}
+	key = key[len(indexPrefixSep):]
+	key, indexID, err = codec.DecodeInt(key)
+	if err != nil {
+		err = errors.Trace(err)
+		return
+	}
+
+	return tableID, indexID, key, nil
 }
 
 // DecodeIndexKey decodes the key and gets the tableID, indexID, indexValues.
