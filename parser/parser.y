@@ -3810,6 +3810,8 @@ JoinTable:
 		$$ = &ast.Join{Left: $1.(ast.ResultSetNode), Right: $3.(ast.ResultSetNode), Tp: ast.CrossJoin}
 	}
 	/* Your code here. */
+	/* $1 $2就是对应的上面规则标记的值，1就是右边第一个，2就是右边第二个，比如$1就是tableref，2就是crossopt，3就是tableref，6就是expression */
+	/* action中ast.Join 这些都是ast包中定义的结构体，需要去ast中找对应用哪个*/
 |	TableRef CrossOpt TableRef "ON" Expression
 	{
 		on := &ast.OnCondition{Expr: $5}
